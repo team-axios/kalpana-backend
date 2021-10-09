@@ -7,6 +7,7 @@ from .models import Journal_Entry
 
 import json
 import uuid
+import text2emotion as te
 
 # Create your views here.
 def login_user_api(request):
@@ -54,12 +55,24 @@ def create_new_note(request):
 		dt = json.loads(request.body)
 		title = dt["title"]
 		details = dt["note"]
+		# predict tone of text here
+		tone = te.get_emotion(details)
+		# print(tone)
+		# [happy, angry, fear, surprise, sad]
+		# happy, surprise | angry | fear, sad
+		# set tempo 0.5 for happy, surprise | set tempo for 0.33 for angry | set tempo for 0.25 for fear, sad
+		selectedTone = None
+		selectedScore = -0.25
+		for i in tone.keys():
+			if tone[i] > selectedScore:
+				selectedScore = tone[i]
+				selectedTone = i
 		entry = Journal_Entry.objects.create(
 			title = title,
 			details = details,
 			uid = uuid.uuid4(),
 			s3_path = '',
-			tone = ''
+			tone = selectedTone
 		)
 		return JsonResponse({
 			"message": "New note added"
