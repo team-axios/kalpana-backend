@@ -85,7 +85,7 @@ def create_new_note(request):
 			'Content-Type': 'application/json'
 		}
 
-		response = requests.request("POST", url, headers=headers, data=payload)
+		response = requests.request("POST", "http://34.212.225.15:3000/notes/new/", headers=headers, data=payload)
 		return JsonResponse({
 			"message": "New note added"
 		}, status=201)
