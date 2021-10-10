@@ -81,3 +81,19 @@ def create_new_note(request):
 		return JsonResponse({
 			"message": "Method not supported"
 		}, status=400)
+
+def update_note(request):
+	if request.method == 'POST':
+		dt = json.loads(request.body)
+		uuid = dt["uuid"]
+		print(dt["message"])
+		model = Journal_Entry.objects.filter(uid = uuid)[0]
+		model.s3_path = 's3://kalpanageneratedaudios/' + uuid.mid
+		model.save()
+		return JsonResponse({
+			"message": "New note added"
+		}, status=201)
+	else:
+		return JsonResponse({
+			"message": "Method not supported"
+		}, status=400)
