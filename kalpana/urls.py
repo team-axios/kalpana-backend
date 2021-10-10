@@ -22,5 +22,6 @@ urlpatterns = [
     path('login/API/', app_views.login_user_api, name='login_api'),
     path('register/API/', app_views.register_user_api, name='register_api'),
     path('note/new/', app_views.create_new_note, name='create_new_note'),
-    path('note/update/', app_views.update_note, name='update_note')
+    path('note/update/', app_views.update_note, name='update_note'),
+    path('', app_views.get_notes, name='get_notes')
 ]

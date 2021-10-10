@@ -10,6 +10,16 @@ import json
 import uuid
 import text2emotion as te
 
+from .setup import SECRET_ACCESS_KEY, ACCESS_KEY
+
+import boto3
+session = boto3.Session(
+	aws_access_key_id=ACCESS_KEY,
+	aws_secret_access_key=SECRET_ACCESS_KEY
+)
+
+s3 = session.client('s3')
+
 # Create your views here.
 def login_user_api(request):
 	if request.method == 'POST':
@@ -68,7 +78,7 @@ def create_new_note(request):
 			if tone[i] > selectedScore:
 				selectedScore = tone[i]
 				selectedTone = i
-		generatedUUID = uuid.uuid4()
+		generatedUUID = str(uuid.uuid4())
 		entry = Journal_Entry.objects.create(
 			title = title,
 			details = details,
@@ -97,10 +107,9 @@ def create_new_note(request):
 def update_note(request):
 	if request.method == 'POST':
 		dt = json.loads(request.body)
-		uuid = dt["uuid"]
-		print(dt["message"])
-		model = Journal_Entry.objects.filter(uid = uuid)[0]
-		model.s3_path = 's3://kalpanageneratedaudios/' + uuid.mid
+		uud = dt["uuid"]
+		model = Journal_Entry.objects.get(uid = uud)
+		model.s3_path = 's3://kalpanageneratedaudios/' + uud + '.wav'
 		model.save()
 		return JsonResponse({
 			"message": "New note added"
@@ -109,3 +118,28 @@ def update_note(request):
 		return JsonResponse({
 			"message": "Method not supported"
 		}, status=400)
+
+def generate_presigned_url(s3Path):
+	uud = s3Path.replace("s3://kalpanageneratedaudios/", "")
+	url = s3.generate_presigned_url(
+		ClientMethod='get_object',
+		Params={
+			'Bucket': 'kalpanageneratedaudios',
+			'Key': uud
+		}
+	)
+	return url
+
+def get_notes(request):
+	li = []
+	for i in Journal_Entry.objects.all():
+		li.append({
+			"title": i.title,
+			"details": i.details,
+			"url": generate_presigned_url(i.s3_path),
+			"created_date": i.created_date
+		})
+	return JsonResponse({
+		"message": li
+	}, status=200)
+
