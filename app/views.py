@@ -5,6 +5,7 @@ from django.http import JsonResponse
 
 from .models import Journal_Entry
 
+import requests
 import json
 import uuid
 import text2emotion as te
@@ -67,13 +68,24 @@ def create_new_note(request):
 			if tone[i] > selectedScore:
 				selectedScore = tone[i]
 				selectedTone = i
+		generatedUUID = uuid.uuid4()
 		entry = Journal_Entry.objects.create(
 			title = title,
 			details = details,
-			uid = uuid.uuid4(),
+			uid = generatedUUID,
 			s3_path = '',
 			tone = selectedTone
 		)
+		payload = json.dumps({
+			"details": details,
+			"tone": selectedTone,
+			"uuid": generatedUUID
+		})
+		headers = {
+			'Content-Type': 'application/json'
+		}
+
+		response = requests.request("POST", url, headers=headers, data=payload)
 		return JsonResponse({
 			"message": "New note added"
 		}, status=201)
